@@ -144,6 +144,7 @@ func (h *Hero) doMove(moveEventIdx int) {
 	case 6:
 		h.jumpWalkLeft()
 	case 7:
+		fmt.Println(h.currentAnimationFrame)
 		h.jumpUp()
 	case 8:
 		h.jumpWalkRight()
@@ -153,7 +154,7 @@ func (h *Hero) doMove(moveEventIdx int) {
 }
 
 func (h *Hero) updateFrame(tick int) {
-	if tick%(maxFps/(h.moveSpeed/10)) == 0 {
+	if tick%(maxFps/(h.moveSpeed/5)) == 0 {
 		h.currentAnimationFrame++
 	}
 
@@ -165,9 +166,10 @@ func (h *Hero) updateFrame(tick int) {
 }
 
 func (h *Hero) update(keys []ebiten.Key, tick int) {
-	if !h.eventAnimating {
+	if !h.eventAnimating || h.currentEvent == eventEnum.Idle {
 		h.moveEvent = h.moveRecognize(keys)
 	}
+	h.eventAnimating = true
 	h.doMove(h.moveEvent)
 	h.updateFrame(tick)
 }
