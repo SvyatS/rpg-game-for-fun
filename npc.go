@@ -37,32 +37,34 @@ type Animation struct {
 	frameCounts int
 }
 
-// hero.events[hero.currentEvent].img
-
 type Hero struct {
 	currentEvent          uint8
 	currentAnimationFrame int
 	events                [9]Animation
-	position              [2]uint32
+	position              [2]int
 	health                uint8
 	mana                  uint8
 	moveSpeed             int
 	attackSpeed           int
 	jumpHeight            int
+	moveEvent             int
+	eventAnimating        bool
 	rightSide             bool
 }
 
 func (h *Hero) init() {
-	// TODO: add sprite width height 
+	// TODO: add sprite width height
 	h.currentEvent = 0
 	h.currentAnimationFrame = 0
 	h.position[0], h.position[1] = 200, 200
 	h.health = 100
 	h.mana = 100
 	h.moveSpeed = 60
-	h.rightSide = true
 	h.attackSpeed = 17
 	h.jumpHeight = 30
+	h.moveEvent = 2
+	h.eventAnimating = false
+	h.rightSide = true
 	h.events = [9]Animation{
 		Animation{
 			img:         getImageFromFilePath("src/assets/Fire vizard/Idle.png"),
@@ -104,86 +106,70 @@ func (h *Hero) init() {
 	fmt.Printf("INIT IS FINISHED\n")
 }
 
-func (h *Hero) jump(way int) {
-	// 0 - left
-	// 1 - up
-	// 2 - right
-	fmt.Println(way)
-	switch way {
-	case 0:
-		h.position[0] = h.position[0] - uint32(h.moveSpeed)
-	case 1:
-		h.position[0] = h.position[1] + uint32(h.moveSpeed)
-	case 2:
-		h.position[0] = h.position[0] + uint32(h.moveSpeed)
-	}
-}
-
-func (h *Hero) move(keys []ebiten.Key) uint8 {
-	var newEvent uint8 = eventEnum.Idle
-
-	if h.currentEvent == eventEnum.Jump && h.currentAnimationFrame < h.events[h.currentEvent].frameCounts {
-		newEvent = eventEnum.Jump
-	}
+func (h *Hero) moveRecognize(keys []ebiten.Key) int {
+	var side int = 0
+	var up int = 0
 
 	if slices.Contains(keys, ebiten.KeyA) {
-		newEvent = eventEnum.Walk
-		h.rightSide = false
-
-		if slices.Contains(keys, ebiten.KeyShiftLeft) {
-			newEvent = eventEnum.Run
-		}
-		h.position[0] = h.position[0] - uint32(h.moveSpeed/(maxFps/2))
-	} else if slices.Contains(keys, ebiten.KeyD) {
-		newEvent = eventEnum.Walk
-		h.rightSide = true
-
-		if slices.Contains(keys, ebiten.KeyShiftLeft) {
-			newEvent = eventEnum.Run
-		}
-		h.position[0] = h.position[0] + uint32(h.moveSpeed/(maxFps/2))
-	} else if slices.Contains(keys, ebiten.KeySpace) {
-		var way int = 1
-
-		if slices.Contains(keys, ebiten.KeyA) {
-			way = 0
-		} else if slices.Contains(keys, ebiten.KeyD) {
-			way = 2
-		}
-
-		h.jump(way)
+		side--
+	}
+	if slices.Contains(keys, ebiten.KeyD) {
+		side++
+	}
+	if slices.Contains(keys, ebiten.KeyShiftLeft) {
+		side = side * 2
+	}
+	if slices.Contains(keys, ebiten.KeySpace) {
+		up++
 	}
 
-	return newEvent
+	side = side + 2
+	return side + up*5
 }
 
-func (h *Hero) attack() {
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
-		h.currentEvent = eventEnum.Attack_1
-	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButton1) {
-		h.currentEvent = eventEnum.Attack_2
-	} else if ebiten.IsKeyPressed(ebiten.KeyQ) {
-		h.currentEvent = eventEnum.Fireball
-	} else if ebiten.IsKeyPressed(ebiten.KeyR) {
-		h.currentEvent = eventEnum.Flame
+func (h *Hero) doMove(moveEventIdx int) {
+	switch moveEventIdx {
+	case 0:
+		h.runleft()
+	case 1:
+		h.walkLeft()
+	case 2:
+		h.step()
+	case 3:
+		h.walkRight()
+	case 4:
+		h.runRight()
+	case 5:
+		h.jumpRunLeft()
+	case 6:
+		h.jumpWalkLeft()
+	case 7:
+		h.jumpUp()
+	case 8:
+		h.jumpWalkRight()
+	case 9:
+		h.jumpRunRight()
+	}
+}
+
+func (h *Hero) updateFrame(tick int) {
+	if tick%(maxFps/(h.moveSpeed/10)) == 0 {
+		h.currentAnimationFrame++
+	}
+
+	if h.currentAnimationFrame >= h.events[h.currentEvent].frameCounts {
+		h.currentAnimationFrame = 0
+		h.currentEvent = eventEnum.Idle
+		h.eventAnimating = false
 	}
 }
 
 func (h *Hero) update(keys []ebiten.Key, tick int) {
-	var newEvent uint8 = h.move(keys)
-	h.attack()
-
-	if h.currentEvent == newEvent {
-		if tick%(maxFps/(h.moveSpeed/10)) == 0 {
-			h.currentAnimationFrame++
-			if h.currentAnimationFrame >= h.events[h.currentEvent].frameCounts {
-				h.currentAnimationFrame = 0
-			}
-		}
-	} else {
-		h.currentEvent = newEvent
-		h.currentAnimationFrame = 0
+	if !h.eventAnimating {
+		h.moveEvent = h.moveRecognize(keys)
 	}
+	h.doMove(h.moveEvent)
+	h.updateFrame(tick)
 }
 
 func (h *Hero) draw(screen *ebiten.Image) {
@@ -199,3 +185,15 @@ func (h *Hero) draw(screen *ebiten.Image) {
 	sx := h.currentAnimationFrame * 128
 	screen.DrawImage(h.events[h.currentEvent].img.SubImage(image.Rect(sx, 0, sx+128, 128)).(*ebiten.Image), op)
 }
+
+// func (h *Hero) attack() {
+// 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
+// 		h.currentEvent = eventEnum.Attack_1
+// 	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButton1) {
+// 		h.currentEvent = eventEnum.Attack_2
+// 	} else if ebiten.IsKeyPressed(ebiten.KeyQ) {
+// 		h.currentEvent = eventEnum.Fireball
+// 	} else if ebiten.IsKeyPressed(ebiten.KeyR) {
+// 		h.currentEvent = eventEnum.Flame
+// 	}
+// }
