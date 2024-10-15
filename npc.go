@@ -32,6 +32,10 @@ var eventEnum = EventEnum{
 	Dead:     8,
 }
 
+var rejectedEvent = []int{
+	0, 1, 2,
+}
+
 type Animation struct {
 	img         *ebiten.Image
 	frameCounts int
@@ -42,6 +46,7 @@ type Hero struct {
 	currentAnimationFrame int
 	events                [9]Animation
 	position              [2]int
+	prevPosition          [2]int
 	health                uint8
 	mana                  uint8
 	moveSpeed             int
@@ -50,13 +55,14 @@ type Hero struct {
 	moveEvent             int
 	eventAnimating        bool
 	rightSide             bool
+	attacking             bool
 }
 
 func (h *Hero) init() {
 	// TODO: add sprite width height
 	h.currentEvent = 0
 	h.currentAnimationFrame = 0
-	h.position[0], h.position[1] = 200, 200
+	h.position[0], h.position[1] = 200, 340
 	h.health = 100
 	h.mana = 100
 	h.moveSpeed = 60
@@ -65,6 +71,7 @@ func (h *Hero) init() {
 	h.moveEvent = 2
 	h.eventAnimating = false
 	h.rightSide = true
+	h.attacking = false
 	h.events = [9]Animation{
 		Animation{
 			img:         getImageFromFilePath("src/assets/Fire vizard/Idle.png"),
@@ -103,7 +110,6 @@ func (h *Hero) init() {
 			frameCounts: 6,
 		},
 	}
-	fmt.Printf("INIT IS FINISHED\n")
 }
 
 func (h *Hero) moveRecognize(keys []ebiten.Key) int {
@@ -127,6 +133,12 @@ func (h *Hero) moveRecognize(keys []ebiten.Key) int {
 	return side + up*5
 }
 
+// func (h *Hero) attckRecognize(keys []ebiten.Key) int {
+// 	if slices.Contains(keys, ebiten.mo) {
+// 		side--
+// 	}
+// }
+
 func (h *Hero) doMove(moveEventIdx int) {
 	switch moveEventIdx {
 	case 0:
@@ -144,7 +156,6 @@ func (h *Hero) doMove(moveEventIdx int) {
 	case 6:
 		h.jumpWalkLeft()
 	case 7:
-		fmt.Println(h.currentAnimationFrame)
 		h.jumpUp()
 	case 8:
 		h.jumpWalkRight()
@@ -154,23 +165,39 @@ func (h *Hero) doMove(moveEventIdx int) {
 }
 
 func (h *Hero) updateFrame(tick int) {
-	if tick%(maxFps/(h.moveSpeed/5)) == 0 {
+	if tick%(maxFps/(h.moveSpeed)*12) == 0 {
+		if !h.attacking {
+			h.doMove(h.moveEvent)
+		}
+
+		fmt.Println(h.currentAnimationFrame)
 		h.currentAnimationFrame++
 	}
 
 	if h.currentAnimationFrame >= h.events[h.currentEvent].frameCounts {
 		h.currentAnimationFrame = 0
-		h.currentEvent = eventEnum.Idle
 		h.eventAnimating = false
+		if h.attacking {
+			h.attacking = false
+		}
 	}
 }
 
+var eventForAnimation = [10]uint8{
+	2, 1, 0, 1, 2, 3, 3, 3, 3, 3,
+}
+
 func (h *Hero) update(keys []ebiten.Key, tick int) {
-	if !h.eventAnimating || h.currentEvent == eventEnum.Idle {
+	if !h.eventAnimating || slices.Contains(rejectedEvent, int(h.currentEvent)) {
 		h.moveEvent = h.moveRecognize(keys)
+		if h.currentEvent != eventForAnimation[h.moveEvent] {
+			h.currentAnimationFrame = 0
+			h.prevPosition = h.position
+		}
 	}
+	h.attack()
 	h.eventAnimating = true
-	h.doMove(h.moveEvent)
+
 	h.updateFrame(tick)
 }
 
@@ -188,14 +215,22 @@ func (h *Hero) draw(screen *ebiten.Image) {
 	screen.DrawImage(h.events[h.currentEvent].img.SubImage(image.Rect(sx, 0, sx+128, 128)).(*ebiten.Image), op)
 }
 
-// func (h *Hero) attack() {
-// 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
-// 		h.currentEvent = eventEnum.Attack_1
-// 	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButton1) {
-// 		h.currentEvent = eventEnum.Attack_2
-// 	} else if ebiten.IsKeyPressed(ebiten.KeyQ) {
-// 		h.currentEvent = eventEnum.Fireball
-// 	} else if ebiten.IsKeyPressed(ebiten.KeyR) {
-// 		h.currentEvent = eventEnum.Flame
-// 	}
-// }
+func (h *Hero) attack() {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
+		h.currentEvent = eventEnum.Attack_1
+		h.currentAnimationFrame = 0
+		h.attacking = true
+	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButton1) {
+		h.currentEvent = eventEnum.Attack_2
+		h.currentAnimationFrame = 0
+		h.attacking = true
+	} else if ebiten.IsKeyPressed(ebiten.KeyQ) {
+		h.currentEvent = eventEnum.Fireball
+		h.currentAnimationFrame = 0
+		h.attacking = true
+	} else if ebiten.IsKeyPressed(ebiten.KeyE) {
+		h.currentEvent = eventEnum.Flame
+		h.currentAnimationFrame = 0
+		h.attacking = true
+	}
+}

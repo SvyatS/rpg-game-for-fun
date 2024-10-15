@@ -11,10 +11,9 @@ import (
 )
 
 const (
-	screenWidth  = 320 * 2
-	screenHeight = 240 * 2
-	maxFps       = 60
-
+	screenWidth    = 320 * 2
+	screenHeight   = 240 * 2
+	maxFps         = 60
 	frameOX        = 0
 	frameOY        = 128
 	frameWidth     = 128
@@ -24,9 +23,10 @@ const (
 )
 
 type Game struct {
-	count int
-	hero  Hero
-	keys  []ebiten.Key
+	count      int
+	hero       Hero
+	background Background
+	keys       []ebiten.Key
 }
 
 func (g *Game) init() {
@@ -41,7 +41,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	
+	g.background.draw(screen)
 	g.hero.draw(screen)
 }
 
@@ -51,10 +51,12 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 func main() {
 	var hero Hero
+	var background Background
 	hero.init()
+	background.init()
 	ebiten.SetWindowSize(screenWidth*2, screenHeight*2)
 	ebiten.SetWindowTitle("Animation (Ebitengine Demo)")
-	if err := ebiten.RunGame(&Game{hero: hero}); err != nil {
+	if err := ebiten.RunGame(&Game{hero: hero, background: background}); err != nil {
 		log.Fatal(err)
 	}
 }

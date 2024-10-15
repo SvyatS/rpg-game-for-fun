@@ -27,48 +27,43 @@ func (h *Hero) runRight() {
 func (h *Hero) jumpRunLeft() {
 	h.currentEvent = eventEnum.Jump
 	h.rightSide = false
-	h.position[0] = h.position[0] - (h.moveSpeed / 10 / h.events[h.currentEvent].frameCounts)
-	if h.currentAnimationFrame <= h.events[h.currentEvent].frameCounts/2 {
-		h.position[1] = h.position[1] - (h.moveSpeed / 10 / h.events[h.currentEvent].frameCounts)
-	} else {
-		h.position[1] = h.position[1] + (h.moveSpeed / 10 / h.events[h.currentEvent].frameCounts)
-	}
+	h.position[0] = h.position[0] - (h.moveSpeed / 10)
+	var addedY = -(h.currentAnimationFrame * h.currentAnimationFrame) + (h.currentAnimationFrame * (h.events[h.currentEvent].frameCounts - 1))
+
+	h.position[1] = h.prevPosition[1] - addedY
 }
 func (h *Hero) jumpWalkLeft() {
 	h.currentEvent = eventEnum.Jump
 	h.rightSide = false
-	h.position[0] = h.position[0] - (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	if h.currentAnimationFrame <= h.events[h.currentEvent].frameCounts/2 {
-		h.position[1] = h.position[1] - (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	} else {
-		h.position[1] = h.position[1] + (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	}
+	h.position[0] = h.position[0] - (h.moveSpeed / 15)
+	var addedY = -(h.currentAnimationFrame * h.currentAnimationFrame) + (h.currentAnimationFrame * (h.events[h.currentEvent].frameCounts - 1))
+
+	h.position[1] = h.prevPosition[1] - addedY
 }
 func (h *Hero) jumpUp() {
 	h.currentEvent = eventEnum.Jump
-	if h.currentAnimationFrame <= h.events[h.currentEvent].frameCounts/2 {
-		h.position[1] = h.position[1] - (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	} else {
-		h.position[1] = h.position[1] + (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	}
+	var addedY = -(h.currentAnimationFrame * h.currentAnimationFrame) + (h.currentAnimationFrame * (h.events[h.currentEvent].frameCounts - 1))
+
+	h.position[1] = h.prevPosition[1] - addedY
+
+	// h.position[1] = h.currentAnimationFrame
+	// if h.currentAnimationFrame < h.events[h.currentEvent].frameCounts/2 {
+	// 	h.position[1] = h.position[1] - (h.moveSpeed / 45)
+	// } else {
+	// 	h.position[1] = h.position[1] + (h.moveSpeed / 45)
+	// }
 }
 func (h *Hero) jumpWalkRight() {
 	h.currentEvent = eventEnum.Jump
 	h.rightSide = true
 	h.position[0] = h.position[0] + (h.moveSpeed / 15)
-	if h.currentAnimationFrame <= h.events[h.currentEvent].frameCounts/2 {
-		h.position[1] = h.position[1] - (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	} else {
-		h.position[1] = h.position[1] + (h.moveSpeed / 15 / h.events[h.currentEvent].frameCounts)
-	}
+	var addedY = -(h.currentAnimationFrame * h.currentAnimationFrame) + (h.currentAnimationFrame * (h.events[h.currentEvent].frameCounts - 1))
+	h.position[1] = h.prevPosition[1] - addedY
 }
 func (h *Hero) jumpRunRight() {
 	h.currentEvent = eventEnum.Jump
 	h.rightSide = true
 	h.position[0] = h.position[0] + (h.moveSpeed / 10)
-	if h.currentAnimationFrame <= h.events[h.currentEvent].frameCounts/2 {
-		h.position[1] = h.position[1] - (h.moveSpeed / 10 / h.events[h.currentEvent].frameCounts)
-	} else {
-		h.position[1] = h.position[1] + (h.moveSpeed / 10 / h.events[h.currentEvent].frameCounts)
-	}
+	var addedY = -(h.currentAnimationFrame * h.currentAnimationFrame) + (h.currentAnimationFrame * (h.events[h.currentEvent].frameCounts - 1))
+	h.position[1] = h.prevPosition[1] - addedY
 }
